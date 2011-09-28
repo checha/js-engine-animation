@@ -1,0 +1,145 @@
+<html>
+	<head>
+		<script type="text/javascript">
+			function Animations(options) {// работает только с пикселями и никакими другими еденицами измерения
+				
+				options = options || {};// {interval}
+				options.interval = options.interval<0?0:(options.interval || 0);
+				
+				var self = this;
+				var id = null;// id таймера
+				var a = {};// хранятся все объявленные анимации; {id:{name:{styles, action, duration(ms), grid(ms), internal, events}}}
+				var ao = {};// хранит ссылки на объекты, которые могут анимироватся{id:DOMObj}
+				var aa = {};// анимации, активные в текущий момент времени{id:{name:{starttime(ms), timeposition(ms), status(pause,play)}}}
+				
+				// public
+				self.add = function(DOMObj, name, styles, options) {
+					var id = getID(DOMObj);
+					setObj(id, DOMObj);
+					a[id] = a[id] || {};
+					a[id][name] = {
+						styles: styles, 
+						action: options.action || null, 
+						duration: options.dyration || null,
+						grid: options.grid || 0,
+						internal: options.internal || true,
+						events: {},
+						//starttime: null,
+						//timeposition: null,
+						//status: null
+					};
+					return id;
+				}
+				
+				self.remove = function(aid, name) {
+					// stop
+					a[aid] = null;
+					setObj(aid, null);
+				}
+				
+				self.addEventListener = function(aid, name, type, callback) {
+					
+				}
+				
+				self.removeEventListener = function(aid, name, type, callback) {
+					
+				}
+				
+				self.css = function(aid, name, styles) {
+					
+				}
+				
+				self.play = function(aid, name) {
+					
+				}
+				
+				self.stop = function(aid, name) {
+					
+				}
+				
+				self.stopPlay = function(aid, name) {
+					
+				}
+				
+				self.pause = function(aid, name) {
+					
+				}
+				
+				self.loop = function(aid, name, status) {
+					
+				}
+				
+				self.__destruct = function() {
+					clearTimeout(id);
+				}
+				
+				// private
+				function __construct(opts) {
+					tick();
+				}
+				
+				function getID(obj) {// __animation_id
+					if(!obj) return null;
+					var obj0 = obj;
+					if(typeof obj == 'string') obj0 = document.getElementById(obj);
+					if(obj0['__animation_id']) {
+						return obj0['__animation_id'];
+					} else {
+						obj0['__animation_id'] = 'id_'+(new Date()).getTime();
+						return obj0['__animation_id'];
+					}
+				}
+				
+				function getObj(id) {
+					return ao[id] || null;
+				}
+				
+				function setObj(id, obj) {
+					ao[id] = obj;
+				}
+				
+				// width, height, top, left, bottom, right, backgroundPositionX, backgroundPositionY; future: margin, padding, zoom, ...
+				function writeStyle(obj, name, value) {// ...
+					if(!obj || !obj.style) return;
+					if(name == 'width') {
+						obj.style['width'] = typeof value == 'number'?value+'px':value;
+					} else if(name == 'height') {
+						obj.style['height'] = typeof value == 'number'?value+'px':value;
+					} else if(name == 'top') {
+						obj.style['top'] = typeof value == 'number'?value+'px':value;
+					} else if(name == 'bottom') {
+						obj.style['bottom'] = typeof value == 'number'?value+'px':value;
+					} else if(name == 'right') {
+						obj.style['right'] = typeof value == 'number'?value+'px':value;
+					} else if(name == 'left') {
+						obj.style['left'] = typeof value == 'number'?value+'px':value;
+					} else if(name == 'backgroundPositionX') {
+						
+					} else if(name == 'backgroundPositionY') {
+						
+					}
+				}
+				
+				function readStyle(obj, name) {// ..
+					
+				}
+				
+				function getStyle(obj, name) {
+					
+				}
+				
+				function tick() {// вызывается каждый раз в таймере
+					for(var i in a) {// engine
+						
+					}
+					id = setTimeout(tick, opts.interval);
+				}
+				
+				// construct
+				__construct(options);
+				
+			}
+		</script>
+	</head>
+	<body></body>
+</html>
