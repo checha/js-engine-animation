@@ -1,43 +1,50 @@
 <html>
 	<head>
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
 		<script type="text/javascript">
-			function Animations(options) {// работает только с пикселями и никакими другими еденицами измерения
+			function AnimationPX(options) {// работает только с пикселями и никакими другими еденицами измерения
 				
 				options = options || {};// {interval}
 				options.interval = options.interval<0?0:(options.interval || 0);
 				
 				var self = this;
 				var id = null;// id таймера
-				var a = {};// хранятся все объявленные анимации; {id:{name:{styles, action, duration(ms), grid(ms), internal, events}}}
+				var a = {};// хранятся все объявленные анимации; {id:{name:{toStyles, action, duration(ms), steps, internal, events}}}
 				var ao = {};// хранит ссылки на объекты, которые могут анимироватся{id:DOMObj}
-				var aa = {};// анимации, активные в текущий момент времени{id:{name:{starttime(ms), timeposition(ms), status(pause,play)}}}
+				var aa = {};// анимации, активные в текущий момент времени{id:{name:{startTime(abs ms), timePosition(ms), status(stop(0),pause(2),play(1)), loop(true/false), step, fromStyles}}}
+				var bgp = false;
 				
 				// public
 				self.add = function(DOMObj, name, styles, options) {
-					var id = getID(DOMObj);
+				
+					styles = styles || {};
+					options = options || {};
+				
+					var id = 'id_'+(new Date()).getTime();
+					
 					setObj(id, DOMObj);
+					
+					// предобработка стилей
+					for(var i in styles) styles[i] = parseFloat(styles[i]);
+					
 					a[id] = a[id] || {};
 					a[id][name] = {
-						styles: styles, 
-						action: options.action || null, 
-						duration: options.dyration || null,
-						grid: options.grid || 0,
-						internal: options.internal || true,
-						events: {},
-						//starttime: null,
-						//timeposition: null,
-						//status: null
+						'toStyles': styles, 
+						'action': typeof options.action == 'function'?options.action:null, 
+						'duration': typeof options.duration == 'number'?options.duration:parseInt(options.duration),
+						'steps': typeof options.steps == 'number'?options.steps:parseInt(options.steps),
+						'internal': options.internal || true,
+						'events': {}
 					};
+					
 					return id;
 				}
 				
 				self.remove = function(aid, name) {
-					// stop
-					a[aid] = null;
-					setObj(aid, null);
+					
 				}
 				
-				self.addEventListener = function(aid, name, type, callback) {
+				self.addEventListener = function(aid, name, type, callback) {// start, stop, pause, end, progress, loop
 					
 				}
 				
@@ -45,16 +52,29 @@
 					
 				}
 				
-				self.css = function(aid, name, styles) {
-					
+				self.css = function(aid, styles) {
+					styles = styles || {};
+					console.log('CSS:');
+					console.log(styles);
+					//console.log('Object: a');
+					//console.log(a);
+					//console.log('Object: ao');
+					//console.log(ao);
+					//console.log('Object: aa');
+					//console.log(aa);
+					for(var i in styles) writeStyle(getObj(aid), i, styles[i]);
 				}
 				
-				self.play = function(aid, name) {
-					
+				self.play = function(aid, name) {// aa
+					aa[aid] = aa[aid] || {};
+					aa[aid][name] = aa[aid][name] || {};					
+					_play(getObj(aid), aa[aid][name], a[aid][name], (new Date()).getTime());
 				}
 				
 				self.stop = function(aid, name) {
-					
+					aa[aid] = aa[aid] || {};
+					aa[aid][name] = aa[aid][name] || {};
+					aa[aid][name].status = 0;
 				}
 				
 				self.stopPlay = function(aid, name) {
@@ -66,7 +86,9 @@
 				}
 				
 				self.loop = function(aid, name, status) {
-					
+					aa[aid] = aa[aid] || {};
+					aa[aid][name] = aa[aid][name] || {};
+					aa[aid][name].loop = true;
 				}
 				
 				self.__destruct = function() {
@@ -76,70 +98,252 @@
 				// private
 				function __construct(opts) {
 					tick();
-				}
-				
-				function getID(obj) {// __animation_id
-					if(!obj) return null;
-					var obj0 = obj;
-					if(typeof obj == 'string') obj0 = document.getElementById(obj);
-					if(obj0['__animation_id']) {
-						return obj0['__animation_id'];
-					} else {
-						obj0['__animation_id'] = 'id_'+(new Date()).getTime();
-						return obj0['__animation_id'];
-					}
+					
+					// определение браузера для backgroundPosition
+					var ua = navigator.userAgent;
+					// баг в IE6
+					if(/safari|chrome|chromium|msie/i.test(ua)) bgp = true;
+					
+					console.log('start global timer');
 				}
 				
 				function getObj(id) {
-					return ao[id] || null;
+					if(!ao[id]) {
+						console.log('AnimationPX ERROR: "'+ao[id]+'" is not object;');
+						return {};
+					}
+					return ao[id];
 				}
 				
 				function setObj(id, obj) {
-					ao[id] = obj;
+					if(obj == null) delete ao[id];
+					else ao[id] = obj;
 				}
 				
 				// width, height, top, left, bottom, right, backgroundPositionX, backgroundPositionY; future: margin, padding, zoom, ...
 				function writeStyle(obj, name, value) {// ...
 					if(!obj || !obj.style) return;
-					if(name == 'width') {
-						obj.style['width'] = typeof value == 'number'?value+'px':value;
-					} else if(name == 'height') {
-						obj.style['height'] = typeof value == 'number'?value+'px':value;
-					} else if(name == 'top') {
-						obj.style['top'] = typeof value == 'number'?value+'px':value;
-					} else if(name == 'bottom') {
-						obj.style['bottom'] = typeof value == 'number'?value+'px':value;
-					} else if(name == 'right') {
-						obj.style['right'] = typeof value == 'number'?value+'px':value;
-					} else if(name == 'left') {
-						obj.style['left'] = typeof value == 'number'?value+'px':value;
-					} else if(name == 'backgroundPositionX') {
-						
-					} else if(name == 'backgroundPositionY') {
-						
+					if(name == 'width' || name == 'height') {
+						obj.style[name] = typeof value == 'number'?value+'px':value;
+					} else if(name == 'top' || name == 'bottom' || name == 'right' || name == 'left') {
+						obj.style[name] = typeof value == 'number'?value+'px':value;
+					} else if(name == 'backgroundPositionX') {					
+						writeStyleBG(obj, name, value, 0);						
+					} else if(name == 'backgroundPositionY') {						
+						writeStyleBG(obj, name, value, 1);						
 					}
 				}
 				
-				function readStyle(obj, name) {// ..
-					
+				function readStyle(obj, name) {// style, getStyle, ..
+					console.log('HTML Obj');
+					console.log(obj);
+					console.log('style name');
+					console.log(name);
+					if(!obj || !obj.style) return 0;
+					if(name == 'width' || name == 'height') {						
+						return parseFloat((obj.style[name]+"").length<1?getStyle(obj, name):obj.style[name]) || 0;						
+					} else if(name == 'top' || name == 'bottom' || name == 'right' || name == 'left') {					
+						return parseFloat((obj.style[name]+"").length<1?getStyle(obj, name):obj.style[name]) || 0;						
+					} else if(name == 'backgroundPositionX') {						
+						return readStyleBG(obj, name, 0) || 0;						
+					} else if(name == 'backgroundPositionY') {						
+						return readStyleBG(obj, name, 1) || 0;						
+					}
+				}
+				
+				function readStyleBG(obj, name, type) {// type = x=0, y=1
+					if(bgp) {
+						return parseFloat((obj.style[name]+"").length<1?getStyle(obj, name):obj.style[name]) || 0;
+					} else {
+						name = 'backgroundPosition';
+						var style = (obj.style[name]+"").length<1?getStyle(obj, name):obj.style[name];
+						style = style.split(' ', 2);
+						return parseFloat(style[type]);
+					}
+				}
+				
+				function writeStyleBG(obj, name, value, type) {// type = x=0, y=1
+					if(bgp) {
+						obj.style[name] = typeof value == 'number'?value+'px':value;
+					} else {
+						name = 'backgroundPosition';
+						var style = (obj.style[name]+"").length<1?getStyle(obj, name):obj.style[name];
+						style = style.split(' ', 2);
+						style[type] = typeof value == 'number'?value+'px':value;
+						obj.style[name] = style.join(' ');
+					}
 				}
 				
 				function getStyle(obj, name) {
-					
+					var style = obj.currentStyle || window.getComputedStyle(obj, null);
+					style = style || {};
+					return style[name];
 				}
 				
 				function tick() {// вызывается каждый раз в таймере
-					for(var i in a) {// engine
+				
+					var time = (new Date()).getTime();
+				
+					for(var i in aa) {// engine
+						aa[i] = aa[i] || {};// ??
 						
+						var obj = getObj(i);
+						
+						for(var j in aa[i]) {
+						
+							var o = aa[i][j] || {};// ??
+							
+							// status(pause, stop)
+							if(o.status !== 1) continue;
+							
+							// +timePosition
+							o.timePosition = time - o.startTime;
+							
+							// последний кадр + loop
+							if(o.timePosition > a[i][j].duration) {
+							
+								var styles = a[i][j].toStyles || {};
+								for(var m in styles) writeStyle(obj, m, styles[m]);								
+								o.status = 0;
+								console.log('END');
+								
+								//loop
+								if(o.loop) _play(obj, o, a[i][j], time);
+								
+								continue;
+							}
+							
+							// steps
+							if(a[i][j].steps > 0) {console.log('animate STEPS');
+								var currentStep = Math.floor(a[i][j].steps*o.timePosition/a[i][j].duration);
+								if(currentStep > o.step) {
+									// nativ ? styles, action : action
+									_tick(obj, o, a[i][j]);
+									
+									o.step = currentStep;
+								}
+								
+								continue;
+							}							
+							
+							// nativ ? styles, action : action
+							_tick(obj, o, a[i][j]);
+							
+						}
 					}
-					id = setTimeout(tick, opts.interval);
+					
+					id = setTimeout(tick, options.interval);
+				}
+				
+				function _tick(obj, aa0, a0) {
+					var styles = {}, styles1 = {};
+					if(a0.internal) {
+						// вычисляются новые значения стилей
+						styles = stdAction(a0.toStyles, aa0.fromStyles, a0.duration, aa0.timePosition, a0.steps, aa0.step);// arg!!!
+					}
+					// получаем стили от action
+					// нужно передавать только копии объектов!!!
+					// искравить баг только в случае очень острой необходимоти...
+					if(a0.action) styles1 = a0.action(a0.toStyles, aa0.fromStyles, a0.duration, aa0.timePosition, a0.steps, aa0.step) || {};// progress, step
+					
+					// сливаем все стили
+					// записываем новые стили
+					console.log(styles);
+					for(var i in styles) {
+						writeStyle(obj, i, styles1[i]?styles1[i]:styles[i]);
+					}
+				}
+				
+				function stdAction(toStyles, fromStyles, duration, timePosition, steps, step) {// return styles
+					var styles = {};
+					for(var i in toStyles) {
+						styles[i] = steps>0?(((toStyles[i] - fromStyles[i])/steps)*step):((toStyles[i] - fromStyles[i]) * (timePosition/duration) + fromStyles[i]);
+					}
+					return styles;
+				}
+				
+				function _play(obj, a0, aa0, time) {console.log('PLAY');
+					a0.startTime = time;
+					a0.timePosition = 0;
+					a0.status = 1;
+					a0.step = 0;
+					a0.fromStyles = a0.fromStyles || {};
+					// записать начальные стили
+					for(var i in aa0.toStyles) {
+						a0.fromStyles[i] = readStyle(obj, i);
+					}
 				}
 				
 				// construct
 				__construct(options);
 				
 			}
+			
+			$(document).ready(function() {
+			
+				//$(document.body).append($('<div id="a1"></div>'));
+			
+				var apx = new AnimationPX({interval:10});
+			
+				// add animation
+				//var aid = apx.add($('#a1').get(0), 'a1', {top: 200, left: 200}, {action: function(toStyles, fromStyles, duration, timePosition, steps, step) {
+				//	return {'top': (toStyles['top'] - fromStyles['top']) * (1 - Math.sin(Math.acos(timePosition/duration))) + fromStyles['top']}
+				//}, duration: 1500, steps: 0, internal: true});
+				//apx.css(aid, {top: 0, left: 0});
+				
+				// play
+				//$(document.body).append($('<div class="play">play</div>').bind('click', function(e) {
+				//	apx.play(aid, 'a1');
+				//	//apx.loop(aid, 'a1', true);
+				//}));
+				
+				$(document.body).append($('<div id="a2"></div>'));
+				
+				var aid = apx.add($('#a2').get(0), 'a2', {backgroundPositionX: -(1360/5*4)}, {action: null, duration: 1500, steps: 0, internal: true});
+				
+				$(document.body).append($('<div class="play">play</div>').bind('click', function(e) {
+					apx.play(aid, 'a2');
+				}));
+				
+				console.log('aid', aid);
+				
+			});
+			
 		</script>
+		<style type="text/css">
+			#a1 {
+				border: 1px solid black;
+				display: inline-block;
+				position: absolute;
+				width: 100px;
+				height: 100px;
+				background-color: gray;
+				top: 0px;
+				left: 0px;
+			}
+			
+			#a2 {
+				background-image: url(hunter.png);
+				background-repeat: no-repeat;
+				width: 272px;
+				height: 208px;
+				background-position: 0px -416px;
+			}
+			
+			.play {
+				border: 1px solid black;
+				display: inline-block;
+				position: absolute;
+				padding: 5px 10px 5px 10px;
+				top: 5px;
+				right: 5px;
+				cursor: pointer;
+			}
+			
+			#a2 {
+				
+			}
+		</style>
 	</head>
 	<body></body>
 </html>
