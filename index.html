@@ -1,15 +1,81 @@
 <html>
 	<head>
+		<script type="text/javascript" src="animations.js"></script>
+		<script type="text/javascript" src="sprite.js"></script>
 		<script type="text/javascript" src="jquery.min.js"></script>
-		<script type="text/javascript" src="js-engine-animation.js"></script>
 		<script type="text/javascript">
 			$(document).ready(function() {
-				var a = new listAnimations({interval:20});
-				setTimeout(function() {a.__destroy();}, 30000);
+				
+				//var a = new Sprite();
+				
+				//a.action('shot').play();
+				/*
+				var a = document.getElementById('animate');
+				
+				a.style.WebkitTransitionProperty = 'left, top';
+				a.style.WebkitTransitionDuration = '4000, 4000';
+				a.style.WebkitTransitionTimingFunction = 'linear, ease';
+				a.style.WebkitTransitionDelay = '0, 0';
+				
+				a.addEventListener("webkitTransitionEnd", function(e) {
+					console.log(e);
+				}, true);
+				
+				a.style.left = '1000px';
+				a.style.top = '500px';
+				
+				setTimeout(function() {
+					//a.style.left = window.getComputedStyle(a, null)['left'];
+					//a.style.WebkitTransitionProperty = 'none';
+					//a.style.WebkitTransitionDuration = '';
+					//a.style.WebkitTransitionTimingFunction = '';
+					a.style.WebkitTransitionProperty = 'left, top, opacity';
+					a.style.WebkitTransitionDuration = '4000, 4000, 2000';
+					a.style.WebkitTransitionTimingFunction = 'linear, ease, linear';
+					a.style.WebkitTransitionDelay = '0, 0, 0';
+					a.style.opacity = '0';
+				}, 2000);
+				
+				*/
+				
+				ANIMATIONS.add(document.getElementById('animate'), 'a1', {
+					toStyle:{left: '1000px', top: '500px'}, 
+					action: 'linear',
+					duration: 4000,
+					delay: 0,
+					direction: 'normal',
+					type: 'css3'
+				});
+				
+				
+				
+				setTimeout(function() {
+				
+				ANIMATIONS.add(document.getElementById('animate'), 'a2', {
+					toStyle:{opacity: '0'}, 
+					action: 'ease',
+					duration: 2000,
+					delay: 0,
+					direction: 'normal',
+					type: 'css3'
+				});
+				
+				}, 5000);
+				
 			});
 		</script>
+		<style type="text/css">
+			#animate {
+				position: absolute;
+				width: 100px;
+				height: 100px;
+				top: 50px;
+				left: 50px;
+				border: 1px solid black;
+			}
+		</style>
 	</head>
 	<body>
-		
+		<div id="animate"></div>
 	</body>
 </html>
